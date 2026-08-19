@@ -1,5 +1,6 @@
 venv/
 src/app/__pycache__
 src/app/nuitka-crash-report.xml
+src/app/saves.json
 build/
 release.zip

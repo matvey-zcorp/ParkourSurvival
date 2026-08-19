@@ -1,5 +1,7 @@
 @echo off
 echo Starting...
-python src\app\main.py
+cd src\app
+python main.py
 echo Program killed!
+cd ..\..
 pause
