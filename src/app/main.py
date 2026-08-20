@@ -67,8 +67,12 @@ while True:
                     is_fullscreen = True
                     fullscreen_delay = 180
                     display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.FULLSCREEN)
+                    pygame.display.set_caption("Parkour Survival")
+                    pygame.display.set_icon(pygame.image.load("icon.ico").convert_alpha())
                 elif is_fullscreen and fullscreen_delay == 0:
                     is_fullscreen = False
                     display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
+                    pygame.display.set_caption("Parkour Survival")
+                    pygame.display.set_icon(pygame.image.load("icon.ico").convert_alpha())
         if event.type == pygame.QUIT:
             sys.exit(0)
