@@ -1,8 +1,7 @@
 import pygame
 import ctypes
 import sys
-
-pygame.init()
+import os
 
 def show_text(message="Text", title="Text", up=False):
     if up:
@@ -27,6 +26,14 @@ def show_error(message="Error!", title="Error", up=True):
         ctypes.windll.user32.MessageBoxW(0, message, title, 0x40010)
     else:
         ctypes.windll.user32.MessageBoxW(0, message, title, 0x10)
+
+files_table =  ["icon.ico"]
+for file in files_table:
+    if not os.path.isfile(file):
+        show_error("A file required for the game to run is missing!", "File not found")
+        sys.exit(1)
+
+pygame.init()
 
 width, height = 640, 480
 MAIN_WIDTH, MAIN_HEIGHT = 640, 480
@@ -64,4 +71,4 @@ while True:
                     is_fullscreen = False
                     display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
         if event.type == pygame.QUIT:
-            sys.exit()
+            sys.exit(0)
