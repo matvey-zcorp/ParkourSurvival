@@ -80,7 +80,9 @@ while True:
             display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
         # Keydown actions
         if event.type == pygame.KEYDOWN:
+            # F11
             if event.key == pygame.K_F11:
+                # Fullscreen actions
                 if not is_fullscreen and fullscreen_delay == 0:
                     is_fullscreen = True
                     fullscreen_delay = 180
