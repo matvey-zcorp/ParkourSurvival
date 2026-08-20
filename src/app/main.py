@@ -1,10 +1,12 @@
 # Imports
+from ctypes import wintypes
 import pygame
 import ctypes
+import json
 import sys
 import os
 
-# Message Boxes
+# Functions
 def show_text(message="Text", title="Text", up=False):
     if up:
         ctypes.windll.user32.MessageBoxW(0, message, title, 0x40000)
@@ -29,12 +31,112 @@ def show_error(message="Error!", title="Error", up=True):
     else:
         ctypes.windll.user32.MessageBoxW(0, message, title, 0x10)
 
+def get_data(filename):
+    try:
+        with open(filename, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except:
+        show_error(f"An unknown error occured while reading the {filename} file!", "Unknown file read error")
+
+def save_data(filename, to_save):
+    try:
+        with open(filename, "w", encoding="utf-8") as file:
+            json.dump(to_save, file, ensure_ascii=False, indent=4)
+    except:
+        show_error(f"An unknown error occured while writing the {filename} file!", "Unknown file write error")
+
+# Constants
+DATA_FILE = "saves.json"
+ORIGINAL_DATA = {
+    "settings": 
+        {
+            "fullscreen": False
+        }
+}
+
+# Checking system requirements
+if sys.maxsize > 2**32:
+    class MEMORYSTATUSEX(ctypes.Structure):
+        _fields_ = [
+            ("dwLength", wintypes.DWORD),
+            ("dwMemoryLoad", wintypes.DWORD),
+            ("ullTotalPhys", ctypes.c_uint64),
+            ("ullAvailPhys", ctypes.c_uint64),
+            ("ullTotalPageFile", ctypes.c_uint64),
+            ("ullAvailPageFile", ctypes.c_uint64),
+            ("ullTotalVirtual", ctypes.c_uint64),
+            ("ullAvailVirtual", ctypes.c_uint64),
+            ("ullAvailExtendedVirtual", ctypes.c_uint64),
+        ]
+    stat = MEMORYSTATUSEX()
+    stat.dwLength = ctypes.sizeof(stat)
+    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+    RAM = round(stat.ullTotalPhys / (1024 ** 3))
+else:
+    class MEMORYSTATUS(ctypes.Structure):
+        _fields_ = [
+            ("dwLength", wintypes.DWORD),
+            ("dwMemoryLoad", wintypes.DWORD),
+            ("ullTotalPhys", ctypes.c_size_t),
+            ("ullAvailPhys", ctypes.c_size_t),
+            ("ullTotalPageFile", ctypes.c_size_t),
+            ("ullAvailPageFile", ctypes.c_size_t),
+            ("ullTotalVirtual", ctypes.c_size_t),
+            ("ullAvailVirtual", ctypes.c_size_t),
+        ]
+    stat = MEMORYSTATUS()
+    stat.dwLength = ctypes.sizeof(stat)
+    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+    RAM = round(stat.ullTotalPhys / (1024 ** 3))
+
+class OSVERSIONINFOEXW(ctypes.Structure):
+    _fields_ = [
+        ("dwOSVersionInfoSize", wintypes.DWORD),
+        ("dwMajorVersion", wintypes.DWORD),
+        ("dwMinorVersion", wintypes.DWORD),
+        ("dwBuildNumber", wintypes.DWORD),
+        ("dwPlatformId", wintypes.DWORD),
+        ("szCSDVersion", wintypes.WCHAR * 128),
+        ("wServicePackMajor", wintypes.WORD),
+        ("wServicePackMinor", wintypes.WORD),
+        ("wSuiteMask", wintypes.WORD),
+        ("wProductType", ctypes.c_byte),
+        ("wReserved", ctypes.c_byte),
+    ]
+
+    def _init__(self):
+        super().__init__()
+        self.dwOSVersionInfoSize = ctypes.sizeof(self)
+
+os_info = OSVERSIONINFOEXW()
+
+ctypes.windll.ntdll.RtlGetVersion(ctypes.byref(os_info))
+
+NT_VERSION = f"{os_info.dwMajorVersion}.{os_info.dwMinorVersion}"
+
+if RAM > 2 and os_info.dwMajorVersion < 6 and os_info.dwMinorVersion < 1:
+    show_warning("Your device may not compatible with this game;play at your own risk.", "Warning!", True)
+
+# Varialbles
+data = None
+save_delay = 0
+is_fullscreen = False
+fullscreen_delay = 0
+
 # Checking files
 files_table =  ["icon.ico"]
 for file in files_table:
     if not os.path.isfile(file):
         show_error("A file required for the game to run is missing!", "File not found")
         sys.exit(1)
+
+# Checking data file
+if not os.path.isfile(DATA_FILE):
+    save_data(DATA_FILE, ORIGINAL_DATA)
+    data = get_data(DATA_FILE)
+else:
+    data = get_data(DATA_FILE)
+    is_fullscreen = data["settings"]["fullscreen"]
 
 # Initializing pygame
 pygame.init()
@@ -44,14 +146,14 @@ width, height = 640, 480
 MAIN_WIDTH, MAIN_HEIGHT = 640, 480
 
 # Creating window
-display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.RESIZABLE)
+if is_fullscreen:
+    display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.FULLSCREEN)
+else:
+    display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.RESIZABLE)
 screen = pygame.Surface((width, height))
 pygame.display.set_caption("Parkour Survival")
 pygame.display.set_icon(pygame.image.load("icon.ico").convert_alpha())
 
-# Fullscreen varialbles
-is_fullscreen = False
-fullscreen_delay = 0
 
 # FPS Clocks
 fps = pygame.time.Clock()
@@ -72,6 +174,12 @@ while True:
     # Fullscreen delay 
     if not fullscreen_delay == 0:
         fullscreen_delay -= 1
+    # Save data & delay
+    if not save_delay == 0:
+        save_delay -= 1
+    else:
+        save_data(DATA_FILE, data)
+        save_delay = 900
     # Event cycle
     for event in pygame.event.get():
         # Window resizing
@@ -94,6 +202,8 @@ while True:
                     display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
                     pygame.display.set_caption("Parkour Survival")
                     pygame.display.set_icon(pygame.image.load("icon.ico").convert_alpha())
+                data["settings"]["fullscreen"] = is_fullscreen
         # On exit
         if event.type == pygame.QUIT:
+            save_data(DATA_FILE, data)
             sys.exit(0)
