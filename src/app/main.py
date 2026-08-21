@@ -1,5 +1,6 @@
 # Imports
 from ctypes import wintypes
+import pygame.freetype
 import pygame
 import ctypes
 import json
@@ -37,6 +38,7 @@ def get_data(filename):
             return json.load(file)
     except:
         show_error(f"An unknown error occured while reading the {filename} file!", "Unknown file read error")
+        return None
 
 def save_data(filename, to_save):
     try:
@@ -44,15 +46,6 @@ def save_data(filename, to_save):
             json.dump(to_save, file, ensure_ascii=False, indent=4)
     except:
         show_error(f"An unknown error occured while writing the {filename} file!", "Unknown file write error")
-
-# Constants
-DATA_FILE = "saves.json"
-ORIGINAL_DATA = {
-    "settings": 
-        {
-            "fullscreen": False
-        }
-}
 
 # Checking system requirements
 if sys.maxsize > 2**32:
@@ -104,7 +97,7 @@ class OSVERSIONINFOEXW(ctypes.Structure):
         ("wReserved", ctypes.c_byte),
     ]
 
-    def _init__(self):
+    def __init__(self):
         super().__init__()
         self.dwOSVersionInfoSize = ctypes.sizeof(self)
 
@@ -117,17 +110,32 @@ NT_VERSION = f"{os_info.dwMajorVersion}.{os_info.dwMinorVersion}"
 if RAM > 2 and os_info.dwMajorVersion < 6 and os_info.dwMinorVersion < 1:
     show_warning("Your device may not compatible with this game;play at your own risk.", "Warning!", True)
 
+# Constants
+DATA_FILE = "saves.json"
+ORIGINAL_DATA = {
+    "settings": 
+        {
+            "fullscreen": False
+        }
+}
+FILES_TABLE =  [
+    "icon.ico",
+    "resources/fonts/Minecraftia-Regular.ttf"
+]
+GAMENAME = "Parkour Survival"
+GAMEVER = "v1.0.0"
+
 # Varialbles
 data = None
 save_delay = 0
 is_fullscreen = False
 fullscreen_delay = 0
+scene = "menu"
 
 # Checking files
-files_table =  ["icon.ico"]
-for file in files_table:
+for file in FILES_TABLE:
     if not os.path.isfile(file):
-        show_error("A file required for the game to run is missing!", "File not found")
+        show_error(f"The {file} file required for the game to launch the game is missing!", "File not found")
         sys.exit(1)
 
 # Checking data file
@@ -143,27 +151,53 @@ pygame.init()
 
 # Resize varialbles
 width, height = 640, 480
-MAIN_WIDTH, MAIN_HEIGHT = 640, 480
 
 # Creating window
 if is_fullscreen:
     display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.FULLSCREEN)
 else:
     display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.RESIZABLE)
-screen = pygame.Surface((width, height))
-pygame.display.set_caption("Parkour Survival")
-pygame.display.set_icon(pygame.image.load("icon.ico").convert_alpha())
 
+# Resources
+# Fonts
+Minecraftia_Font = pygame.freetype.Font("resources/fonts/Minecraftia-Regular.ttf")
+# Images
+Icon_Image = pygame.image.load("icon.ico").convert_alpha()
+
+# Buttons
+play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=32, fgcolor=(255, 255, 255))
+play_menu_btn_rect.topleft = (16, 64)
+
+# Resizable, caption & icon settings.
+screen = pygame.Surface((width, height))
+pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
+pygame.display.set_icon(Icon_Image)
 
 # FPS Clocks
 fps = pygame.time.Clock()
 
 # Always cycle
 while True:
+    # Getting mouse pos
+    mouse = pygame.mouse.get_pos()
     # Cleaning window
     screen.fill((0, 0, 0))
-    # Test circle
-    pygame.draw.circle(screen, (0, 0, 255), (320, 240), 100)
+    # Menu scene
+    if scene == "menu":
+        # Texts & icon
+        screen.blit(Icon_Image, (16, 16))
+        Minecraftia_Font.render_to(screen, (64, 16), GAMENAME, size=32, fgcolor=(255, 255, 255))
+        Minecraftia_Font.render_to(screen, (382, 48), GAMEVER, size=8, fgcolor=(255, 255, 255))
+        # Buttons
+        screen.blit(play_menu_btn, play_menu_btn_rect)
+        if play_menu_btn_rect.collidepoint(mouse):
+            play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=36, fgcolor=(0, 255, 0))
+            play_menu_btn_rect.topleft = (16, 64)
+            if pygame.mouse.get_pressed()[0]:
+                pass
+        else:
+            play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=32, fgcolor=(255, 255, 255))
+            play_menu_btn_rect.topleft = (16, 64)
     scaled_display = pygame.transform.scale(screen, (width, height))
     # Bliting image to window
     display.blit(scaled_display, (0, 0))
@@ -186,6 +220,8 @@ while True:
         if event.type == pygame.VIDEORESIZE:
             width, height = max(event.w, 640), max(event.h, 480)
             display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
+            pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
+            pygame.display.set_icon(Icon_Image)
         # Keydown actions
         if event.type == pygame.KEYDOWN:
             # F11
@@ -195,14 +231,18 @@ while True:
                     is_fullscreen = True
                     fullscreen_delay = 180
                     display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.FULLSCREEN)
-                    pygame.display.set_caption("Parkour Survival")
-                    pygame.display.set_icon(pygame.image.load("icon.ico").convert_alpha())
+                    pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
+                    pygame.display.set_icon(Icon_Image)
                 elif is_fullscreen and fullscreen_delay == 0:
                     is_fullscreen = False
                     display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
-                    pygame.display.set_caption("Parkour Survival")
-                    pygame.display.set_icon(pygame.image.load("icon.ico").convert_alpha())
+                    pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
+                    pygame.display.set_icon(Icon_Image)
+                    fullscreen_delay = 180
                 data["settings"]["fullscreen"] = is_fullscreen
+            # F2
+            if event.key == pygame.K_F2:
+                save_data(DATA_FILE, data)
         # On exit
         if event.type == pygame.QUIT:
             save_data(DATA_FILE, data)
