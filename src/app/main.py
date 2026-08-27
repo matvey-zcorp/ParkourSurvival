@@ -1,6 +1,7 @@
 # Imports
 from ctypes import wintypes
 import pygame.freetype
+import subprocess
 import pygame
 import ctypes
 import json
@@ -46,6 +47,16 @@ def save_data(filename, to_save):
             json.dump(to_save, file, ensure_ascii=False, indent=4)
     except:
         show_error(f"An unknown error occured while writing the {filename} file!", "Unknown file write error")
+
+def exit():
+    save_data(DATA_FILE, data)
+    sys.exit(0)
+
+def restart():
+    save_data(DATA_FILE, data)
+    subprocess.Popen([sys.executable] + sys.argv)
+    pygame.event.post(pygame.event.Event(pygame.QUIT))
+
 
 # Checking system requirements
 if sys.maxsize > 2**32:
@@ -108,19 +119,24 @@ ctypes.windll.ntdll.RtlGetVersion(ctypes.byref(os_info))
 NT_VERSION = f"{os_info.dwMajorVersion}.{os_info.dwMinorVersion}"
 
 if RAM > 2 and os_info.dwMajorVersion < 6 and os_info.dwMinorVersion < 1:
-    show_warning("Your device may not compatible with this game;play at your own risk.", "Warning!", True)
+    show_warning("Your device may not compatible with this game; play at your own risk.", "Warning!", True)
 
 # Constants
 DATA_FILE = "saves.json"
 ORIGINAL_DATA = {
     "settings": 
         {
-            "fullscreen": False
+            "fullscreen": False,
+            "FPSCounter": False
         }
 }
 FILES_TABLE =  [
     "icon.ico",
-    "resources/fonts/Minecraftia-Regular.ttf"
+    "resources/fonts/Minecraftia-Regular.ttf",
+    "resources/images/checkbox_off.png",
+    "resources/images/checkbox_on.png",
+    "resources/images/back.png",
+    "resources/images/back_highlight.png"
 ]
 GAMENAME = "Parkour Survival"
 GAMEVER = "v1.0.0"
@@ -163,10 +179,17 @@ else:
 Minecraftia_Font = pygame.freetype.Font("resources/fonts/Minecraftia-Regular.ttf")
 # Images
 Icon_Image = pygame.image.load("icon.ico").convert_alpha()
+Checkbox_Off_Image = pygame.transform.scale(pygame.image.load("resources/images/checkbox_off.png").convert_alpha(), (32, 32))
+Checkbox_On_Image = pygame.transform.scale(pygame.image.load("resources/images/checkbox_on.png").convert_alpha(), (32, 32))
+Back_Image = pygame.transform.scale(pygame.image.load("resources/images/back.png").convert_alpha(), (32, 32))
+Back_Highlight_Image = pygame.transform.scale(pygame.image.load("resources/images/back_highlight.png").convert_alpha(), (32, 32))
 
 # Buttons
 play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=32, fgcolor=(255, 255, 255))
 play_menu_btn_rect.topleft = (16, 64)
+settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render("Settings", size=32, fgcolor=(255, 255, 255))
+settings_menu_btn_rect.topleft = (16, 112)
+settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
 
 # Resizable, caption & icon settings.
 screen = pygame.Surface((width, height))
@@ -182,7 +205,7 @@ while True:
     mouse = pygame.mouse.get_pos()
     # Cleaning window
     screen.fill((0, 0, 0))
-    # Menu scene
+    # Scenes
     if scene == "menu":
         # Texts & icon
         screen.blit(Icon_Image, (16, 16))
@@ -198,6 +221,27 @@ while True:
         else:
             play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=32, fgcolor=(255, 255, 255))
             play_menu_btn_rect.topleft = (16, 64)
+        screen.blit(settings_menu_btn, settings_menu_btn_rect)
+        if settings_menu_btn_rect.collidepoint(mouse):
+            settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render("Settings", size=36, fgcolor=(0, 255, 0))
+            settings_menu_btn_rect.topleft = (16, 112)
+            if pygame.mouse.get_pressed()[0]:
+                scene = "settings"
+        else:
+            settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render("Settings", size=32, fgcolor=(255, 255, 255))
+            settings_menu_btn_rect.topleft = (16, 112)
+    elif scene == "settings":
+        Minecraftia_Font.render_to(screen, (64, 16), "Settings", size=32, fgcolor=(255, 255, 255))
+        # Buttons
+        if settings_back_btn_rect.collidepoint(mouse):
+            screen.blit(Back_Highlight_Image, (16, 16))
+            if pygame.mouse.get_pressed()[0]:
+                scene = "menu"
+        else:
+            screen.blit(Back_Image, (16, 16))
+    else:
+        show_error("Invalid scene, The game will be restarted", "Inavlid scene")
+        restart()
     scaled_display = pygame.transform.scale(screen, (width, height))
     # Bliting image to window
     display.blit(scaled_display, (0, 0))
@@ -245,5 +289,4 @@ while True:
                 save_data(DATA_FILE, data)
         # On exit
         if event.type == pygame.QUIT:
-            save_data(DATA_FILE, data)
-            sys.exit(0)
+            exit()

@@ -4,4 +4,3 @@ cd src\app
 python main.py
 echo Program killed!
 cd ..\..
-pause
