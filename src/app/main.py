@@ -127,7 +127,8 @@ ORIGINAL_DATA = {
     "settings": 
         {
             "fullscreen": False,
-            "FPSCounter": False
+            "FPSCounter": False,
+            "lang": "english"
         }
 }
 FILES_TABLE =  [
@@ -140,6 +141,22 @@ FILES_TABLE =  [
 ]
 GAMENAME = "Parkour Survival"
 GAMEVER = "v1.0.0"
+RUSSIAN_TEXT_LOCALIZATION = {
+    "menu.play_btn": "Играть!",
+    "menu.settings_btn": "Настройки",
+    "menu.exit_btn": "Выйти",
+    "settings.name": "Настройки",
+    "settings.language": "Язык:",
+    "settings.language_change_btn": "Русский"
+}
+ENGLISH_TEXT_LOCALIZATION = {
+    "menu.play_btn": "Play!",
+    "menu.settings_btn": "Settings",
+    "menu.exit_btn": "Exit",
+    "settings.name": "Settings",
+    "settings.language": "Language:",
+    "settings.language_change_btn": "Русский"
+}
 
 # Varialbles
 data = None
