@@ -6,3 +6,4 @@ build/
 releases.zip
 .vscode/
 temp/
+src/app/localization.dll

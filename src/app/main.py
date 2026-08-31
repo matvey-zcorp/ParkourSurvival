@@ -8,7 +8,15 @@ import json
 import sys
 import os
 
+# Loading dlls
+localization_dll = ctypes.CDLL(".\localization.dll")
+localization_dll.get_localized_string.restype = ctypes.c_wchar_p
+
 # Functions
+def get_localization_resource(language, resource):
+    global localization_dll
+    return localization_dll.get_localized_string(ctypes.c_wchar_p(resource), ctypes.c_wchar_p(language))
+
 def show_text(message="Text", title="Text", up=False):
     if up:
         ctypes.windll.user32.MessageBoxW(0, message, title, 0x40000)
@@ -141,22 +149,6 @@ FILES_TABLE =  [
 ]
 GAMENAME = "Parkour Survival"
 GAMEVER = "v1.0.0"
-RUSSIAN_TEXT_LOCALIZATION = {
-    "menu.play_btn": "Играть!",
-    "menu.settings_btn": "Настройки",
-    "menu.exit_btn": "Выйти",
-    "settings.name": "Настройки",
-    "settings.language": "Язык:",
-    "settings.language_change_btn": "Русский"
-}
-ENGLISH_TEXT_LOCALIZATION = {
-    "menu.play_btn": "Play!",
-    "menu.settings_btn": "Settings",
-    "menu.exit_btn": "Exit",
-    "settings.name": "Settings",
-    "settings.language": "Language:",
-    "settings.language_change_btn": "Русский"
-}
 
 # Varialbles
 data = None
@@ -164,6 +156,7 @@ save_delay = 0
 is_fullscreen = False
 fullscreen_delay = 0
 scene = "menu"
+is_clicked = False
 
 # Checking files
 for file in FILES_TABLE:
@@ -202,11 +195,22 @@ Back_Image = pygame.transform.scale(pygame.image.load("resources/images/back.png
 Back_Highlight_Image = pygame.transform.scale(pygame.image.load("resources/images/back_highlight.png").convert_alpha(), (32, 32))
 
 # Buttons
-play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=32, fgcolor=(255, 255, 255))
-play_menu_btn_rect.topleft = (16, 64)
-settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render("Settings", size=32, fgcolor=(255, 255, 255))
-settings_menu_btn_rect.topleft = (16, 112)
-settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
+if data["settings"]["lang"] == "russian":
+    play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
+    play_menu_btn_rect.topleft = (16, 64)
+    settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
+    settings_menu_btn_rect.topleft = (16, 64)
+    lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "settings.lang"), size=32, fgcolor=(255, 255, 255))
+    lang_settings_btn_rect.topleft = (128, 64)
+    settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
+else:
+    play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
+    play_menu_btn_rect.topleft = (16, 64)
+    settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
+    settings_menu_btn_rect.topleft = (16, 64)
+    lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "settings.lang"), size=32, fgcolor=(255, 255, 255))
+    lang_settings_btn_rect.topleft = (128, 64)
+    settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
 
 # Resizable, caption & icon settings.
 screen = pygame.Surface((width, height))
@@ -230,25 +234,53 @@ while True:
         Minecraftia_Font.render_to(screen, (382, 48), GAMEVER, size=8, fgcolor=(255, 255, 255))
         # Buttons
         screen.blit(play_menu_btn, play_menu_btn_rect)
-        if play_menu_btn_rect.collidepoint(mouse):
-            play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=36, fgcolor=(0, 255, 0))
-            play_menu_btn_rect.topleft = (16, 64)
-            if pygame.mouse.get_pressed()[0]:
-                pass
+        if data["settings"]["lang"] == "russian":
+            if play_menu_btn_rect.collidepoint(mouse):
+                play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.play_btn"), size=36, fgcolor=(0, 255, 0))
+                play_menu_btn_rect.topleft = (16, 64)
+                if pygame.mouse.get_pressed()[0]:
+                    pass
+            else:
+                play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
+                play_menu_btn_rect.topleft = (16, 64)
         else:
-            play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render("Play!", size=32, fgcolor=(255, 255, 255))
-            play_menu_btn_rect.topleft = (16, 64)
+            if play_menu_btn_rect.collidepoint(mouse):
+                play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.play_btn"), size=36, fgcolor=(0, 255, 0))
+                play_menu_btn_rect.topleft = (16, 64)
+                if pygame.mouse.get_pressed()[0]:
+                    pass
+            else:
+                play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
+                play_menu_btn_rect.topleft = (16, 64)
         screen.blit(settings_menu_btn, settings_menu_btn_rect)
-        if settings_menu_btn_rect.collidepoint(mouse):
-            settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render("Settings", size=36, fgcolor=(0, 255, 0))
-            settings_menu_btn_rect.topleft = (16, 112)
-            if pygame.mouse.get_pressed()[0]:
-                scene = "settings"
+        if data["settings"]["lang"] == "russian":
+            if settings_menu_btn_rect.collidepoint(mouse):
+                settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.settings_btn"), size=36, fgcolor=(0, 255, 0))
+                settings_menu_btn_rect.topleft = (16, 112)
+                if pygame.mouse.get_pressed()[0]:
+                    scene = "settings"
+            else:
+                settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
+                settings_menu_btn_rect.topleft = (16, 112)
         else:
-            settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render("Settings", size=32, fgcolor=(255, 255, 255))
-            settings_menu_btn_rect.topleft = (16, 112)
+            if settings_menu_btn_rect.collidepoint(mouse):
+                settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.settings_btn"), size=36, fgcolor=(0, 255, 0))
+                settings_menu_btn_rect.topleft = (16, 112)
+                if pygame.mouse.get_pressed()[0]:
+                    scene = "settings"
+            else:
+                settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
+                settings_menu_btn_rect.topleft = (16, 112)
     elif scene == "settings":
-        Minecraftia_Font.render_to(screen, (64, 16), "Settings", size=32, fgcolor=(255, 255, 255))
+        if data["settings"]["lang"] == "russian":
+            Minecraftia_Font.render_to(screen, (64, 16), get_localization_resource("russian", "settings.name"), size=32, fgcolor=(255, 255, 255))
+        else:
+            Minecraftia_Font.render_to(screen, (64, 16), get_localization_resource("english", "settings.name"), size=32, fgcolor=(255, 255, 255))
+        if data["settings"]["lang"] == "russian":
+            Minecraftia_Font.render_to(screen, (16, 64), get_localization_resource("russian", "settings.lang_text"), size=32, fgcolor=(255, 255, 255))
+        else:
+            Minecraftia_Font.render_to(screen, (16, 64), get_localization_resource("english", "settings.lang_text"), size=32, fgcolor=(255, 255, 255))
+
         # Buttons
         if settings_back_btn_rect.collidepoint(mouse):
             screen.blit(Back_Highlight_Image, (16, 16))
@@ -256,6 +288,32 @@ while True:
                 scene = "menu"
         else:
             screen.blit(Back_Image, (16, 16))
+        if lang_settings_btn_rect.collidepoint(mouse):
+            if data["settings"]["lang"] == "russian":
+                lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "settings.lang"), size=32, fgcolor=(0, 255, 0))
+                lang_settings_btn_rect.topleft = (128, 64)
+            else:
+                lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "settings.lang"), size=32, fgcolor=(0, 255, 0))
+                lang_settings_btn_rect.topleft = (128, 64)
+            
+            if pygame.mouse.get_pressed()[0]:
+                if not is_clicked:
+                    if data["settings"]["lang"] == "russian":
+                        data["settings"]["lang"] = "english"
+                    else:
+                        data["settings"]["lang"] = "russian"
+                    is_clicked = True
+            else:
+                is_clicked = False
+        else:
+            if data["settings"]["lang"] == "russian":
+                lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "settings.lang"), size=32, fgcolor=(255, 255, 255))
+                lang_settings_btn_rect.topleft = (128, 64)
+            else:
+                lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "settings.lang"), size=32, fgcolor=(255, 255, 255))
+                lang_settings_btn_rect.topleft = (128, 64)
+
+        screen.blit(lang_settings_btn, lang_settings_btn_rect)
     else:
         show_error("Invalid scene, The game will be restarted", "Inavlid scene")
         restart()
