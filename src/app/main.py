@@ -135,7 +135,6 @@ ORIGINAL_DATA = {
     "settings": 
         {
             "fullscreen": False,
-            "FPSCounter": False,
             "lang": "english"
         }
 }
@@ -172,6 +171,45 @@ else:
     data = get_data(DATA_FILE)
     is_fullscreen = data["settings"]["fullscreen"]
 
+# Checking localization
+if get_localization_resource("english", "menu.play_btn") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("russian", "menu.play_btn") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("english", "menu.settings_btn") == "NULLABLE":
+    show_error("Localization is not valid!",  "Localization error")
+    sys.exit(1)
+elif get_localization_resource("russian", "menu.settings_btn") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("english", "settings.name") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("russian", "settings.name") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("english", "settings.lang_text") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("russian", "settings.lang_text") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("english", "settings.lang") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("russian", "settings.lang") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("english", "menu.exit_btn") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+elif get_localization_resource("russian", "menu.exit_btn") == "NULLABLE":
+    show_error("Localization is not valid!", "Localization error")
+    sys.exit(1)
+
+
 # Initializing pygame
 pygame.init()
 
@@ -203,6 +241,8 @@ if data["settings"]["lang"] == "russian":
     lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "settings.lang"), size=32, fgcolor=(255, 255, 255))
     lang_settings_btn_rect.topleft = (128, 64)
     settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
+    exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
+    exit_menu_btn_rect.topleft = (16, 64)
 else:
     play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
     play_menu_btn_rect.topleft = (16, 64)
@@ -211,6 +251,8 @@ else:
     lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "settings.lang"), size=32, fgcolor=(255, 255, 255))
     lang_settings_btn_rect.topleft = (128, 64)
     settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
+    exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
+    exit_menu_btn_rect.topleft = (16, 64)
 
 # Resizable, caption & icon settings.
 screen = pygame.Surface((width, height))
@@ -271,6 +313,25 @@ while True:
             else:
                 settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
                 settings_menu_btn_rect.topleft = (16, 112)
+        if data["settings"]["lang"] == "russian":
+            if exit_menu_btn_rect.collidepoint(mouse):
+                exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.exit_btn"), size=36, fgcolor=(255, 0, 0))
+                exit_menu_btn_rect.topleft = (16, 160)
+                if pygame.mouse.get_pressed()[0]:
+                    pygame.event.post(pygame.event.Event(pygame.QUIT))
+            else:
+                exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
+                exit_menu_btn_rect.topleft = (16, 160)
+        else:
+            if exit_menu_btn_rect.collidepoint(mouse):
+                exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.exit_btn"), size=36, fgcolor=(255, 0, 0))
+                exit_menu_btn_rect.topleft = (16, 160)
+                if pygame.mouse.get_pressed()[0]:
+                    pygame.event.post(pygame.event.Event(pygame.QUIT))
+            else:
+                exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
+                exit_menu_btn_rect.topleft = (16, 160)
+        screen.blit(exit_menu_btn, exit_menu_btn_rect)  
     elif scene == "settings":
         if data["settings"]["lang"] == "russian":
             Minecraftia_Font.render_to(screen, (64, 16), get_localization_resource("russian", "settings.name"), size=32, fgcolor=(255, 255, 255))

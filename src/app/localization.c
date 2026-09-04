@@ -21,5 +21,9 @@ __declspec(dllexport) const wchar_t* get_localized_string(const wchar_t* key, co
         if (wcscmp(lang, L"russian") == 0) return L"Русский";
         return L"English";
     }
-    return L"Unknown";
+    if (wcscmp(key, L"menu.exit_btn") == 0) {
+        if (wcscmp(lang, L"russian") == 0) return L"Выйти";
+        return L"Exit";
+    }
+    return L"NULLABLE";
 }

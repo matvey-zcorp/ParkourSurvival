@@ -1,9 +1,8 @@
 venv/
-src/app/__pycache__
-src/app/nuitka-crash-report.xml
-src/app/saves.json
+temp/
 build/
 releases.zip
-.vscode/
-temp/
+src/app/saves.json
+src/app/__pycache__
 src/app/localization.dll
+src/app/nuitka-crash-report.xml

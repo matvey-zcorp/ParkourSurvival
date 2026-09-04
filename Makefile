@@ -10,10 +10,10 @@ SETUP_DIR = setup
 VENV_DIR = venv
 TEMP_DIR = temp
 
-.PHONY: all createVenv install run compile compileDll
+.PHONY: all createVenv install run compile
 .SILENT:
 
-all: createVenv install run compile compileDll
+all: createVenv install run compile
 
 createVenv:
 	echo Creating venv...
@@ -29,14 +29,12 @@ install:
 	echo Installed!
 
 run:
+	echo Compiling code...
+	cd $(SRC_DIR)/$(APP_DIR) & python -m py_compile $(SCRIPT)
+	gcc -shared -o $(SRC_DIR)/$(APP_DIR)/$(DLL) $(SRC_DIR)/$(APP_DIR)/$(SRC_DLL)
 	echo Running $(SCRIPT)...
 	$(VENV_DIR)/Scripts/activate.bat
 	cd $(SRC_DIR)/$(APP_DIR) & python $(SCRIPT)
-
-compileDll:
-	echo Compiling...
-	gcc -shared -o $(SRC_DIR)/$(APP_DIR)/$(DLL) $(SRC_DIR)/$(APP_DIR)/$(SRC_DLL)
-	echo Compiled!
 
 compile:
 	echo Compiling...
