@@ -1,5 +1,5 @@
-# Imports
 from ctypes import wintypes
+import urllib.request
 import pygame.freetype
 import subprocess
 import pygame
@@ -8,11 +8,9 @@ import json
 import sys
 import os
 
-# Loading dlls
 localization_dll = ctypes.CDLL(".\localization.dll")
 localization_dll.get_localized_string.restype = ctypes.c_wchar_p
 
-# Functions
 def get_localization_resource(language, resource):
     global localization_dll
     return localization_dll.get_localized_string(ctypes.c_wchar_p(resource), ctypes.c_wchar_p(language))
@@ -65,8 +63,6 @@ def restart():
     subprocess.Popen([sys.executable] + sys.argv)
     pygame.event.post(pygame.event.Event(pygame.QUIT))
 
-
-# Checking system requirements
 if sys.maxsize > 2**32:
     class MEMORYSTATUSEX(ctypes.Structure):
         _fields_ = [
@@ -121,15 +117,12 @@ class OSVERSIONINFOEXW(ctypes.Structure):
         self.dwOSVersionInfoSize = ctypes.sizeof(self)
 
 os_info = OSVERSIONINFOEXW()
-
 ctypes.windll.ntdll.RtlGetVersion(ctypes.byref(os_info))
-
 NT_VERSION = f"{os_info.dwMajorVersion}.{os_info.dwMinorVersion}"
 
 if RAM > 2 and os_info.dwMajorVersion < 6 and os_info.dwMinorVersion < 1:
     show_warning("Your device may not compatible with this game; play at your own risk.", "Warning!", True)
 
-# Constants
 DATA_FILE = "saves.json"
 ORIGINAL_DATA = {
     "settings": 
@@ -138,18 +131,20 @@ ORIGINAL_DATA = {
             "lang": "english"
         }
 }
-FILES_TABLE =  [
+FILES_TABLE = [
     "icon.ico",
     "resources/fonts/Minecraftia-Regular.ttf",
     "resources/images/checkbox_off.png",
     "resources/images/checkbox_on.png",
     "resources/images/back.png",
-    "resources/images/back_highlight.png"
+    "resources/images/back_highlight.png",
+    "resources/images/play.png",
+    "resources/images/settings.png",
+    "resources/images/exit.png",
 ]
 GAMENAME = "Parkour Survival"
 GAMEVER = "v1.0.0"
 
-# Varialbles
 data = None
 save_delay = 0
 is_fullscreen = False
@@ -157,13 +152,11 @@ fullscreen_delay = 0
 scene = "menu"
 is_clicked = False
 
-# Checking files
 for file in FILES_TABLE:
     if not os.path.isfile(file):
         show_error(f"The {file} file required for the game to launch the game is missing!", "File not found")
         sys.exit(1)
 
-# Checking data file
 if not os.path.isfile(DATA_FILE):
     save_data(DATA_FILE, ORIGINAL_DATA)
     data = get_data(DATA_FILE)
@@ -171,7 +164,6 @@ else:
     data = get_data(DATA_FILE)
     is_fullscreen = data["settings"]["fullscreen"]
 
-# Checking localization
 if get_localization_resource("english", "menu.play_btn") == "NULLABLE":
     show_error("Localization is not valid!", "Localization error")
     sys.exit(1)
@@ -209,146 +201,172 @@ elif get_localization_resource("russian", "menu.exit_btn") == "NULLABLE":
     show_error("Localization is not valid!", "Localization error")
     sys.exit(1)
 
+is_new_version = True
+try:
+    with urllib.request.urlopen("https://raw.githubusercontent.com/matvey-zcorp/ParkourSurvival/refs/heads/main/server/latest.txt") as response:
+        latest_version = response.read().decode("utf-8").strip()
+        if latest_version != GAMEVER:
+            show_warning(f"Your version is old please upgrade!\n1: To upgrade copy file: {os.getcwd()}\saves.txt to any folder.\n2: Delete Parkour Survival in control panel.\n3: Download and install new version.\n4: Delete new saves.json in new game install directory.\n5: Paste your copied old saves.json file.\n6: Done!")
+            is_new_version = False
+except Exception as e:
+    show_error(f"Check version error: {e}")
 
-# Initializing pygame
 pygame.init()
 
-# Resize varialbles
 width, height = 640, 480
+window_width, window_height = 640, 480
 
-# Creating window
 if is_fullscreen:
-    display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.FULLSCREEN)
+    display = pygame.display.set_mode((window_width, window_height), pygame.HWSURFACE | pygame.FULLSCREEN)
 else:
-    display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.RESIZABLE)
+    display = pygame.display.set_mode((window_width, window_height), pygame.HWSURFACE | pygame.RESIZABLE)
 
-# Resources
-# Fonts
 Minecraftia_Font = pygame.freetype.Font("resources/fonts/Minecraftia-Regular.ttf")
-# Images
 Icon_Image = pygame.image.load("icon.ico").convert_alpha()
 Checkbox_Off_Image = pygame.transform.scale(pygame.image.load("resources/images/checkbox_off.png").convert_alpha(), (32, 32))
 Checkbox_On_Image = pygame.transform.scale(pygame.image.load("resources/images/checkbox_on.png").convert_alpha(), (32, 32))
 Back_Image = pygame.transform.scale(pygame.image.load("resources/images/back.png").convert_alpha(), (32, 32))
 Back_Highlight_Image = pygame.transform.scale(pygame.image.load("resources/images/back_highlight.png").convert_alpha(), (32, 32))
+Play_Icon = pygame.transform.scale(pygame.image.load("resources/images/play.png").convert_alpha(), (16, 16))
+Settings_Icon = pygame.transform.scale(pygame.image.load("resources/images/settings.png").convert_alpha(), (16, 16))
+Exit_Icon = pygame.transform.scale(pygame.image.load("resources/images/exit.png").convert_alpha(), (16, 16))
 
-# Buttons
 if data["settings"]["lang"] == "russian":
     play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
     play_menu_btn_rect.topleft = (16, 64)
     settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
-    settings_menu_btn_rect.topleft = (16, 64)
+    settings_menu_btn_rect.topleft = (16, 112)
     lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "settings.lang"), size=32, fgcolor=(255, 255, 255))
     lang_settings_btn_rect.topleft = (128, 64)
     settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
     exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
-    exit_menu_btn_rect.topleft = (16, 64)
+    exit_menu_btn_rect.topleft = (16, 160)
 else:
     play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
     play_menu_btn_rect.topleft = (16, 64)
     settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
-    settings_menu_btn_rect.topleft = (16, 64)
+    settings_menu_btn_rect.topleft = (16, 112)
     lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "settings.lang"), size=32, fgcolor=(255, 255, 255))
     lang_settings_btn_rect.topleft = (128, 64)
     settings_back_btn_rect = Back_Image.get_rect(topleft=(16, 16))
     exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
-    exit_menu_btn_rect.topleft = (16, 64)
+    exit_menu_btn_rect.topleft = (16, 160)
 
-# Resizable, caption & icon settings.
 screen = pygame.Surface((width, height))
 pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
 pygame.display.set_icon(Icon_Image)
 
-# FPS Clocks
 fps = pygame.time.Clock()
 
-# Always cycle
 while True:
-    # Getting mouse pos
-    mouse = pygame.mouse.get_pos()
-    # Cleaning window
+    raw_mouse = pygame.mouse.get_pos()
+    if window_width > 0 and window_height > 0:
+        mouse = (
+            raw_mouse[0] * width / window_width,
+            raw_mouse[1] * height / window_height
+        )
+    else:
+        mouse = raw_mouse
+
     screen.fill((0, 0, 0))
-    # Scenes
+
     if scene == "menu":
-        # Texts & icon
         screen.blit(Icon_Image, (16, 16))
         Minecraftia_Font.render_to(screen, (64, 16), GAMENAME, size=32, fgcolor=(255, 255, 255))
         Minecraftia_Font.render_to(screen, (382, 48), GAMEVER, size=8, fgcolor=(255, 255, 255))
-        # Buttons
+
         screen.blit(play_menu_btn, play_menu_btn_rect)
         if data["settings"]["lang"] == "russian":
             if play_menu_btn_rect.collidepoint(mouse):
                 play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.play_btn"), size=36, fgcolor=(0, 255, 0))
                 play_menu_btn_rect.topleft = (16, 64)
+                screen.blit(Play_Icon, (184, 72))
                 if pygame.mouse.get_pressed()[0]:
-                    pass
+                    scene = "level-select"
             else:
                 play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
                 play_menu_btn_rect.topleft = (16, 64)
+                screen.blit(Play_Icon, (168, 72))
         else:
             if play_menu_btn_rect.collidepoint(mouse):
                 play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.play_btn"), size=36, fgcolor=(0, 255, 0))
                 play_menu_btn_rect.topleft = (16, 64)
+                screen.blit(Play_Icon, (120, 72))
                 if pygame.mouse.get_pressed()[0]:
-                    pass
+                    scene = "level-select"
             else:
                 play_menu_btn, play_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.play_btn"), size=32, fgcolor=(255, 255, 255))
                 play_menu_btn_rect.topleft = (16, 64)
+                screen.blit(Play_Icon, (112, 72))
+
         screen.blit(settings_menu_btn, settings_menu_btn_rect)
         if data["settings"]["lang"] == "russian":
             if settings_menu_btn_rect.collidepoint(mouse):
                 settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.settings_btn"), size=36, fgcolor=(0, 255, 0))
                 settings_menu_btn_rect.topleft = (16, 112)
+                screen.blit(Settings_Icon, (256, 128))
                 if pygame.mouse.get_pressed()[0]:
                     scene = "settings"
             else:
                 settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
                 settings_menu_btn_rect.topleft = (16, 112)
+                screen.blit(Settings_Icon, (232, 128))
         else:
             if settings_menu_btn_rect.collidepoint(mouse):
                 settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.settings_btn"), size=36, fgcolor=(0, 255, 0))
                 settings_menu_btn_rect.topleft = (16, 112)
+                screen.blit(Settings_Icon, (200, 124))
                 if pygame.mouse.get_pressed()[0]:
                     scene = "settings"
             else:
                 settings_menu_btn, settings_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.settings_btn"), size=32, fgcolor=(255, 255, 255))
                 settings_menu_btn_rect.topleft = (16, 112)
+                screen.blit(Settings_Icon, (176, 124))
+
         if data["settings"]["lang"] == "russian":
             if exit_menu_btn_rect.collidepoint(mouse):
                 exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.exit_btn"), size=36, fgcolor=(255, 0, 0))
                 exit_menu_btn_rect.topleft = (16, 160)
+                screen.blit(Exit_Icon, (160, 176))
                 if pygame.mouse.get_pressed()[0]:
                     pygame.event.post(pygame.event.Event(pygame.QUIT))
             else:
                 exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
                 exit_menu_btn_rect.topleft = (16, 160)
+                screen.blit(Exit_Icon, (144, 176))
         else:
             if exit_menu_btn_rect.collidepoint(mouse):
                 exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.exit_btn"), size=36, fgcolor=(255, 0, 0))
                 exit_menu_btn_rect.topleft = (16, 160)
+                screen.blit(Exit_Icon, (96, 168))
                 if pygame.mouse.get_pressed()[0]:
                     pygame.event.post(pygame.event.Event(pygame.QUIT))
             else:
                 exit_menu_btn, exit_menu_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "menu.exit_btn"), size=32, fgcolor=(255, 255, 255))
                 exit_menu_btn_rect.topleft = (16, 160)
-        screen.blit(exit_menu_btn, exit_menu_btn_rect)  
+                screen.blit(Exit_Icon, (96, 168))
+        screen.blit(exit_menu_btn, exit_menu_btn_rect)
+
     elif scene == "settings":
         if data["settings"]["lang"] == "russian":
             Minecraftia_Font.render_to(screen, (64, 16), get_localization_resource("russian", "settings.name"), size=32, fgcolor=(255, 255, 255))
+            screen.blit(Settings_Icon, (280, 32))
         else:
             Minecraftia_Font.render_to(screen, (64, 16), get_localization_resource("english", "settings.name"), size=32, fgcolor=(255, 255, 255))
+            screen.blit(Settings_Icon, (228, 24))
+
         if data["settings"]["lang"] == "russian":
             Minecraftia_Font.render_to(screen, (16, 64), get_localization_resource("russian", "settings.lang_text"), size=32, fgcolor=(255, 255, 255))
         else:
             Minecraftia_Font.render_to(screen, (16, 64), get_localization_resource("english", "settings.lang_text"), size=32, fgcolor=(255, 255, 255))
 
-        # Buttons
         if settings_back_btn_rect.collidepoint(mouse):
             screen.blit(Back_Highlight_Image, (16, 16))
             if pygame.mouse.get_pressed()[0]:
                 scene = "menu"
         else:
             screen.blit(Back_Image, (16, 16))
+
         if lang_settings_btn_rect.collidepoint(mouse):
             if data["settings"]["lang"] == "russian":
                 lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("russian", "settings.lang"), size=32, fgcolor=(0, 255, 0))
@@ -378,51 +396,46 @@ while True:
     else:
         show_error("Invalid scene, The game will be restarted", "Inavlid scene")
         restart()
-    scaled_display = pygame.transform.scale(screen, (width, height))
-    # Bliting image to window
+
+    scaled_display = pygame.transform.scale(screen, (window_width, window_height))
     display.blit(scaled_display, (0, 0))
-    # Updating window
     pygame.display.flip()
-    # Set FPS to 60
     fps.tick(60)
-    # Fullscreen delay 
+
     if not fullscreen_delay == 0:
         fullscreen_delay -= 1
-    # Save data & delay
+
     if not save_delay == 0:
         save_delay -= 1
     else:
         save_data(DATA_FILE, data)
         save_delay = 900
-    # Event cycle
+
     for event in pygame.event.get():
-        # Window resizing
         if event.type == pygame.VIDEORESIZE:
-            width, height = max(event.w, 640), max(event.h, 480)
-            display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
+            window_width, window_height = max(event.w, 640), max(event.h, 480)
+            display = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE | pygame.HWSURFACE)
             pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
             pygame.display.set_icon(Icon_Image)
-        # Keydown actions
+
         if event.type == pygame.KEYDOWN:
-            # F11
             if event.key == pygame.K_F11:
-                # Fullscreen actions
                 if not is_fullscreen and fullscreen_delay == 0:
                     is_fullscreen = True
                     fullscreen_delay = 180
-                    display = pygame.display.set_mode((width, height), pygame.HWSURFACE | pygame.FULLSCREEN)
+                    display = pygame.display.set_mode((window_width, window_height), pygame.HWSURFACE | pygame.FULLSCREEN)
                     pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
                     pygame.display.set_icon(Icon_Image)
                 elif is_fullscreen and fullscreen_delay == 0:
                     is_fullscreen = False
-                    display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.HWSURFACE)
+                    display = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE | pygame.HWSURFACE)
                     pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
                     pygame.display.set_icon(Icon_Image)
                     fullscreen_delay = 180
                 data["settings"]["fullscreen"] = is_fullscreen
-            # F2
+
             if event.key == pygame.K_F2:
                 save_data(DATA_FILE, data)
-        # On exit
+
         if event.type == pygame.QUIT:
             exit()

@@ -3,6 +3,5 @@ temp/
 build/
 releases.zip
 src/app/saves.json
-src/app/__pycache__
 src/app/localization.dll
 src/app/nuitka-crash-report.xml

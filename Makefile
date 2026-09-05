@@ -1,4 +1,5 @@
 REQUIREMENTS = requirements.txt
+UPGRADER = upgrade.py
 SCRIPT = main.py
 SRC_DLL = localization.c
 DLL = localization.dll
@@ -10,10 +11,10 @@ SETUP_DIR = setup
 VENV_DIR = venv
 TEMP_DIR = temp
 
-.PHONY: all createVenv install run compile
+.PHONY: all createVenv install run compile compileDll
 .SILENT:
 
-all: createVenv install run compile
+all: createVenv install run compile compileDll
 
 createVenv:
 	echo Creating venv...
@@ -28,17 +29,19 @@ install:
 	pip install -r $(REQUIREMENTS)
 	echo Installed!
 
-run:
-	echo Compiling code...
-	cd $(SRC_DIR)/$(APP_DIR) & python -m py_compile $(SCRIPT)
+compileDll:
+	echo Compiling...
 	gcc -shared -o $(SRC_DIR)/$(APP_DIR)/$(DLL) $(SRC_DIR)/$(APP_DIR)/$(SRC_DLL)
+	echo Compiled!
+
+run:
 	echo Running $(SCRIPT)...
 	$(VENV_DIR)/Scripts/activate.bat
 	cd $(SRC_DIR)/$(APP_DIR) & python $(SCRIPT)
 
 compile:
 	echo Compiling...
-	nuitka --onefile --windows-console-mode=disable --output-dir=$(OUT_DIR)\$(APP_DIR) --remove-output --windows-icon-from-ico=$(SRC_DIR)/$(APP_DIR)/icon.ico --jobs=2 --standalone $(SRC_DIR)/$(APP_DIR)/$(SCRIPT)
+	nuitka --onefile --windows-console-mode=disable --output-dir=$(OUT_DIR)\$(APP_DIR) --remove-output --windows-icon-from-ico=$(SRC_DIR)/$(APP_DIR)/icon.ico --standalone $(SRC_DIR)/$(APP_DIR)/$(SCRIPT)
 	gcc -shared -o $(OUT_DIR)/$(APP_DIR)/$(DLL) $(SRC_DIR)/$(APP_DIR)/$(SRC_DLL)
 	copy $(SRC_DIR)/$(APP_DIR)/icon.ico $(OUT_DIR)/$(APP_DIR)/icon.ico
 	xcopy $(SRC_DIR)/$(APP_DIR)/resources $(OUT_DIR)/$(APP_DIR)/resources /E /I
