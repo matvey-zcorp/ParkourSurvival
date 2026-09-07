@@ -151,6 +151,7 @@ is_fullscreen = False
 fullscreen_delay = 0
 scene = "menu"
 is_clicked = False
+escape_cooldown = 0
 
 for file in FILES_TABLE:
     if not os.path.isfile(file):
@@ -206,7 +207,7 @@ try:
     with urllib.request.urlopen("https://raw.githubusercontent.com/matvey-zcorp/ParkourSurvival/refs/heads/main/server/latest.txt") as response:
         latest_version = response.read().decode("utf-8").strip()
         if latest_version != GAMEVER:
-            show_warning(f"Your version is old please upgrade!\n1: To upgrade copy file: {os.getcwd()}\saves.txt to any folder.\n2: Delete Parkour Survival in control panel.\n3: Download and install new version.\n4: Delete new saves.json in new game install directory.\n5: Paste your copied old saves.json file.\n6: Done!")
+            show_warning(f"Your version is old please upgrade!")
             is_new_version = False
 except Exception as e:
     show_error(f"Check version error: {e}")
@@ -391,8 +392,10 @@ while True:
             else:
                 lang_settings_btn, lang_settings_btn_rect = Minecraftia_Font.render(get_localization_resource("english", "settings.lang"), size=32, fgcolor=(255, 255, 255))
                 lang_settings_btn_rect.topleft = (128, 64)
-
+        
         screen.blit(lang_settings_btn, lang_settings_btn_rect)
+    elif scene == "level-select":
+        pass
     else:
         show_error("Invalid scene, The game will be restarted", "Inavlid scene")
         restart()
@@ -404,6 +407,9 @@ while True:
 
     if not fullscreen_delay == 0:
         fullscreen_delay -= 1
+
+    if not escape_cooldown == 0:
+        escape_cooldown -= 1
 
     if not save_delay == 0:
         save_delay -= 1
@@ -417,7 +423,6 @@ while True:
             display = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE | pygame.HWSURFACE)
             pygame.display.set_caption(f"{GAMENAME} {GAMEVER}")
             pygame.display.set_icon(Icon_Image)
-
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_F11:
                 if not is_fullscreen and fullscreen_delay == 0:
@@ -433,9 +438,17 @@ while True:
                     pygame.display.set_icon(Icon_Image)
                     fullscreen_delay = 180
                 data["settings"]["fullscreen"] = is_fullscreen
-
             if event.key == pygame.K_F2:
                 save_data(DATA_FILE, data)
-
+                show_info("Data saved!", "Saved")
+            if event.key == pygame.K_ESCAPE:
+                if escape_cooldown == 0:
+                    escape_cooldown = 30
+                    if scene == "settings":
+                        scene = "menu"
+                    elif scene == "level-select":
+                        scene = "menu"
+                    elif scene == "menu":
+                        pygame.event.post(pygame.event.Event(pygame.QUIT))
         if event.type == pygame.QUIT:
             exit()
